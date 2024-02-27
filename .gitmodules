@@ -1,0 +1,4 @@
+[submodule "lib/rddl-sdk"]
+	path = lib/rddl-sdk
+	url = git@github.com:rddl-network/rddl-sdk.git
+	branch = fasagidag/adding_nanopb
