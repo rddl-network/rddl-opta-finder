@@ -5,19 +5,17 @@
 #include <Arduino_JSON.h>
 #include <NTPClient.h>
 #include <mbed_mktime.h>
-
+#include "rddlSDKAPI.h"
 #include "arduino_secrets.h"
 
 // Enter your sensitive data in arduino_secrets.h
 constexpr char broker[] { SECRET_BROKER };
 constexpr unsigned port { SECRET_PORT };
-const char* certificate { SECRET_CERTIFICATE };
+const char* certificate { TEST_CERTIFICATE };
 
 #include <WiFi.h>
 #include <WiFiUdp.h>
 // Enter your sensitive data in arduino_secrets.h
-constexpr char ssid[] { SECRET_SSID };
-constexpr char pass[] { SECRET_PASS };
 WiFiConnectionHandler conMan(SECRET_SSID, SECRET_PASS);
 WiFiClient tcpClient;
 WiFiUDP NTPUdp;
@@ -42,18 +40,33 @@ void sendHttpsGetRequestTest();
 extern void webPageSetup();
 extern void webPageLoop();
 
-void aws_mqtt_setup()
-{
-    Serial.begin(115200);
 
+void wifi_setup(){
     // Wait for Serial Monitor or start after 2.5s
     for (const auto startNow = millis() + 2500; !Serial && millis() < startNow; delay(250));
+
+    // WiFi.begin(SECRET_SSID, SECRET_PASS);
+    
+    // while(WiFi.status() != WL_CONNECTED){
+    //     Serial.println(">>>> CONNECTING to Network...");
+    //     delay(1000);
+    // }
+
+    // Serial.println(">>>> CONNECTED to network");
+
+    // printWifiStatus();
+    // setNtpTime();
 
     // Set the callbacks for connectivity management
     conMan.addCallback(NetworkConnectionEvent::CONNECTED, onNetworkConnect);
     conMan.addCallback(NetworkConnectionEvent::DISCONNECTED, onNetworkDisconnect);
     conMan.addCallback(NetworkConnectionEvent::ERROR, onNetworkError);
 
+    timeClient.begin();
+}
+
+void aws_mqtt_setup()
+{
     // Check for HSM
     if (!ECCX08.begin()) {
         Serial.println("No ECCX08 present!");
@@ -63,12 +76,17 @@ void aws_mqtt_setup()
 
     // Configure TLS to use HSM and the key/certificate pair
     ArduinoBearSSL.onGetTime(getTime);
-    sslClient.setEccSlot(0, certificate);
-    // sslClient2.setEccSlot(0, certificate);
-    mqttClient.setId("ArduinoPortenta1");
-    mqttClient.onMessage(onMessageReceived);
+    sslClient.setEccSlot(0, SECRET_CERTIFICATE);
+    // String devName;
+    // devName.reserve(128);
+    //sdkReadFile("devName", (uint8_t*)&devName[0], 128);
+    // if(devName.isEmpty()){
+        // Serial.println("ERROR! Device name couldnt find!");
+        // return;
+    // }
 
-    timeClient.begin();
+    mqttClient.setId("Portenta03");
+    mqttClient.onMessage(onMessageReceived);
 
     // Start the server
     webPageSetup();
@@ -78,9 +96,11 @@ void aws_mqtt_loop()
 {
     // Automatically manage connectivity
     const auto conStatus = conMan.check();
-
     if (conStatus != NetworkConnectionState::CONNECTED)
         return;
+    // auto wifiStatus = WiFi.status();
+    // if(wifiStatus != WL_CONNECTED)
+    //     return;
 
     if (!mqttClient.connected()) {
         // MQTT client is disconnected, connect
@@ -109,93 +129,12 @@ bool checkNetwork(){
     if (conStatus != NetworkConnectionState::CONNECTED)
         return false;
 
+    // auto wifiStatus = WiFi.status();
+    // if(wifiStatus != WL_CONNECTED)
+    //     return false;
+
     return true;
 }
-
-// int convertToHex(char c) ;
-// String urlDecode(String input) ;
-
-// void webPageLoop() {
-//     // Listen for incoming clients
-//     WiFiClient client = server.available();
-    
-//     if (client) {
-//         // If a client has connected
-//         Serial.println("New client connected");
-
-//         // Check if the client has sent a request
-//         if (client.connected()) {
-//             // Read the first line of the request
-//             String request = client.readStringUntil('\r');
-//             // Discard the rest of the request
-//             client.readStringUntil('\n');
-
-//             // Process the command and generate the response
-//             String response = "<h1>Enter Command:</h1>";
-//             response += "<form method='get' action='/'><input type='text' name='command'><input type='submit' value='Submit'></form>";
-
-//             // Extract the user's command from the request
-//             String userCommand = "";
-//             int paramIndex = request.indexOf("command=");
-//             if (paramIndex != -1) {
-//                 userCommand = request.substring(paramIndex + 8);
-//                 userCommand.trim();
-//                 // URL decode the command
-//                 userCommand.replace('+', ' ');
-//                 userCommand = urlDecode(userCommand);
-//             }
-
-//             // Print the extracted command for debugging
-            
-//             response += "<h1>Response:</h1>";
-//             response += "<p>User Command: " + userCommand + "</p>";
-//             // Call a function on the device based on the command
-//             // Replace this with your actual command processing logic
-
-//             // Send the HTTP response
-//             client.println("HTTP/1.1 200 OK");
-//             client.println("Content-type:text/html");
-//             client.println();
-//             client.println(response);
-
-//             // Close the connection
-//             client.stop();
-//             Serial.println("Client disconnected");
-//         }
-//     }
-// }
-
-// // Decode a URL-encoded string
-// String urlDecode(String input) {
-//     String decoded = "";
-//     char a, b;
-//     for (size_t i = 0; i < input.length(); i++) {
-//         if (input[i] == '%') {
-//             a = input[i + 1];
-//             b = input[i + 2];
-//             decoded += char(convertToHex(a) * 16 + convertToHex(b));
-//             i += 2;
-//         } else if (input[i] == '+') {
-//             decoded += ' ';
-//         } else {
-//             decoded += input[i];
-//         }
-//     }
-//     return decoded;
-// }
-
-// // Convert a hexadecimal character to its integer value
-// int convertToHex(char c) {
-//     if ('0' <= c && c <= '9') {
-//         return c - '0';
-//     } else if ('a' <= c && c <= 'f') {
-//         return c - 'a' + 10;
-//     } else if ('A' <= c && c <= 'F') {
-//         return c - 'A' + 10;
-//     } else {
-//         return -1; // Invalid character
-//     }
-// }
 
 
 void setNtpTime()
@@ -220,10 +159,16 @@ void connectMQTT()
     Serial.println();
 
     int status;
+    int cnt{0};
     while ((status = mqttClient.connect(broker, port)) == 0) {
         // failed, retry
         Serial.println(status);
         delay(1000);
+        cnt++;
+        if(cnt >= 5){ 
+            Serial.print("Fail to connect MQTT broker ");
+            return;
+        }
     }
     Serial.println();
 
@@ -304,7 +249,7 @@ void onNetworkConnect()
 
     printWifiStatus();
     setNtpTime();
-    connectMQTT();
+    // connectMQTT();
 }
 
 void onNetworkDisconnect()

@@ -29,7 +29,29 @@
 #include <ArduinoECCX08.h>
 #include <utility/ECCX08CSR.h>
 #include <utility/ECCX08DefaultTLSConfig.h>
+#include "rddlSDKAPI.h"
 
+
+char SECRET_CERTIFICATE[2048];
+// -----BEGIN CERTIFICATE-----
+// MIIC3DCCAcSgAwIBAgIVAJcs3R6Yq6F8gqK1wWiKyCdW0fznMA0GCSqGSIb3DQEB
+// CwUAME0xSzBJBgNVBAsMQkFtYXpvbiBXZWIgU2VydmljZXMgTz1BbWF6b24uY29t
+// IEluYy4gTD1TZWF0dGxlIFNUPVdhc2hpbmd0b24gQz1VUzAeFw0yNDAyMjAxMTUx
+// MTFaFw00OTEyMzEyMzU5NTlaMGsxCzAJBgNVBAYTAlRSMRAwDgYDVQQIEwdNQVJN
+// QVJBMREwDwYDVQQHEwhJU1RBTkJVTDEMMAoGA1UEChMDUiZDMQ4wDAYDVQQLEwVF
+// TUJFRDEZMBcGA1UEAxMQQXJkdWlub1BvcnRlbnRhMTBZMBMGByqGSM49AgEGCCqG
+// SM49AwEHA0IABDyAh2Qc0sDcoRq4xnTpCf7PRCT2OEUoJuEwTfhWm0F+UYIcpe6J
+// 57YevX+fLcx1F6Q5DLX/xlZtDXb7IRSoejWjYDBeMB8GA1UdIwQYMBaAFJ0Kgk7L
+// hlNBVGeTiA6E5/8GxIHZMB0GA1UdDgQWBBSNC9B2fig9lQTMSl/cid0kOGLzRzAM
+// BgNVHRMBAf8EAjAAMA4GA1UdDwEB/wQEAwIHgDANBgkqhkiG9w0BAQsFAAOCAQEA
+// OZ0QMTyR1E3uw/9oRcqEuGvUQv25Ujol1CiEDctwFJbUvtD6chBGZVHHdXIzlCTP
+// noZ/RaViazjR27IBy9oVnjT9GZf2gHYpbjHdJPSykHh8IW6tfTUyjy/szMOHyHUO
+// +H5UARkBwp4Xj2mFfGudPahPe3n2GsQCfXoS9HLs6HDWceMv04Rd0hRnK4SuBca5
+// 9gK6pStiDgfyE+EKI9xxQ9hAJbKkY4xtrguJAzPr3beCdeNNm51YOXnLiuePyFvu
+// 1bELpjPgl7yWkHZMXBLIla5MWwQyJPfPIrUuoQEaDzH4dctnLrROQHdZNPbwQ299
+// qtxBimHmtU+KqaT+SDv3YQ==
+// -----END CERTIFICATE-----
+// )";
 
 
 String readLine() {
@@ -72,9 +94,7 @@ String promptAndReadLine(const char* prompt, const char* defaultValue) {
 }
 
 
-void certCreateSetup() {
-  if (!Serial);
-    return;
+String certCreateSetup() {
 
   if (!ECCX08.begin()) {
     Serial.println("No ECCX08 present!");
@@ -148,4 +168,7 @@ void certCreateSetup() {
   Serial.println("Here's your CSR, enjoy!");
   Serial.println();
   Serial.println(csr);
+  sdkWriteFile("devName", (uint8_t*)common.c_str(), common.length());
+
+  return csr;
 }
