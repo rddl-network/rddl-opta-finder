@@ -20,6 +20,8 @@ void printHex(uint8_t num) {
 
 
 command_code getUserCommand (std::string const& cmd) {
+  if (cmd.find("Help")          != std::string::npos) return eHelp;
+  if (cmd.find("help")          != std::string::npos) return eHelp;
   if (cmd.find("SetWifi")       != std::string::npos) return eSetWifi;
   if (cmd.find("Mnemonic")      != std::string::npos) return eMnemonic;
   if (cmd.find("GetPublickey")  != std::string::npos) return eGetPublicKey;
@@ -30,6 +32,20 @@ command_code getUserCommand (std::string const& cmd) {
   if (cmd.find("ReadCert")      != std::string::npos) return eReadCert;
   if (cmd.find("TestAWSMQTTMsg")!= std::string::npos) return eTestAWSMQTTMsg;
   return NumOfUserCommand;
+}
+
+
+void CmndHelp(){
+  Serial.println("Help");
+  Serial.println("SetWifi");
+  Serial.println("Mnemonic (optional)<mnemonic> ");
+  Serial.println("GetPublickey");
+  Serial.println("AttestMachine");
+  Serial.println("NotarizeData <data>");
+  Serial.println("CreateCsr");
+  Serial.println("StoreCert");
+  Serial.println("ReadCert");
+  Serial.println("TestAWSMQTTMsg");
 }
 
 
@@ -163,6 +179,10 @@ void CmndAWSTest(){
 
 void cmdInterpreter(std::vector<std::string> &cmd){
   switch(getUserCommand(cmd[0])){
+    case eHelp:
+      CmndHelp();
+      break;
+
     case eSetWifi:
       CmndSetWifi(cmd);
       break;
