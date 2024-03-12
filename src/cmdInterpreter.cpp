@@ -6,6 +6,7 @@
 #include "arduino_secrets.h"
 #include "cmdInterpreter.h"
 #include "awsMqtt.h"
+#include "rddl.h"
 
 using namespace std;
 
@@ -24,13 +25,15 @@ command_code getUserCommand (std::string const& cmd) {
   if (cmd.find("help")          != std::string::npos) return eHelp;
   if (cmd.find("SetWifi")       != std::string::npos) return eSetWifi;
   if (cmd.find("Mnemonic")      != std::string::npos) return eMnemonic;
-  if (cmd.find("GetPublickey")  != std::string::npos) return eGetPublicKey;
+  if (cmd.find("StoreSeed")     != std::string::npos) return eStoreSeed;
+  if (cmd.find("Publickeys")    != std::string::npos) return eGetPublicKey;
   if (cmd.find("AttestMachine") != std::string::npos) return eAttestMachine;
   if (cmd.find("NotarizeData")  != std::string::npos) return eNotarizeData;
   if (cmd.find("CreateCsr")     != std::string::npos) return eCreateCsr;
   if (cmd.find("StoreCert")     != std::string::npos) return eStoreCert;
   if (cmd.find("ReadCert")      != std::string::npos) return eReadCert;
   if (cmd.find("TestAWSMQTTMsg")!= std::string::npos) return eTestAWSMQTTMsg;
+  if (cmd.find("Balance")       != std::string::npos) return eBalance;
   return NumOfUserCommand;
 }
 
@@ -39,13 +42,15 @@ void CmndHelp(){
   Serial.println("Help");
   Serial.println("SetWifi");
   Serial.println("Mnemonic (optional)<mnemonic> ");
-  Serial.println("GetPublickey");
+  Serial.println("StoreSeed <Seed>");
+  Serial.println("Publickeys");
   Serial.println("AttestMachine");
   Serial.println("NotarizeData <data>");
   Serial.println("CreateCsr");
   Serial.println("StoreCert");
   Serial.println("ReadCert");
   Serial.println("TestAWSMQTTMsg");
+  Serial.println("Balance");
 }
 
 
@@ -88,9 +93,22 @@ void CmndMnemonic(vector<string> &cmd){
 }
 
 
-void CmndPublicKeys(){
-  sdkStoreSeed(TEST_SEED);
+void CmndStoreSeed(vector<string> &cmd){
+  portentaDeleteFile("seed");
+  if( cmd[1].size() == 128)
+  {
+    sdkStoreSeed((char*)fromHexString(cmd[1].c_str()));
+    Serial.println("Seed Stored!");
+  }
+  else
+  {
+    Serial.println("FAIL! SEED SIZE IS NOT 64 BYTES");
+  }
+  
+}
 
+
+void CmndPublicKeys(){
   if( !sdkGetPlntmntKeys() ){
     Serial.println("Initialize Keys first (Mnemonic)");
   }else{
@@ -176,6 +194,21 @@ void CmndAWSTest(){
   }
 }
 
+std::pair<int, String> sendHttpsGetRequest(const char* domainUrl, const char* urlPath, const std::vector<std::pair<String, String>>& headers);
+
+void CmndBalance(){
+  String uri{};
+  uri += "/cosmos/bank/v1beta1/balances/";
+  uri += sdkGetRDDLAddress();
+
+  std::vector<std::pair<String, String>> headers;
+  headers.push_back(std::make_pair(String{"Content-Type"}, String{"application/json"}));
+
+  auto response = sendHttpsGetRequest("testnet-api.rddl.io", uri.c_str(), headers);
+  Serial.print("Balance: ");
+  Serial.print(response.second.c_str());
+}
+
 
 void cmdInterpreter(std::vector<std::string> &cmd){
   switch(getUserCommand(cmd[0])){
@@ -189,6 +222,10 @@ void cmdInterpreter(std::vector<std::string> &cmd){
 
     case eMnemonic:
       CmndMnemonic(cmd);
+      break;
+    
+    case eStoreSeed:
+      CmndStoreSeed(cmd);
       break;
 
     case eGetPublicKey:
@@ -217,6 +254,10 @@ void cmdInterpreter(std::vector<std::string> &cmd){
 
     case eTestAWSMQTTMsg:
       CmndAWSTest();
+      break;
+
+    case eBalance:
+      CmndBalance();
       break;
 
     default:

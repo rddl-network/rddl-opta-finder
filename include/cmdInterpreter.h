@@ -4,6 +4,7 @@ enum command_code {
     eHelp,
     eSetWifi,
     eMnemonic,
+    eStoreSeed,
     eGetPublicKey,
     eAttestMachine,
     eNotarizeData,
@@ -11,5 +12,6 @@ enum command_code {
     eStoreCert,
     eReadCert,
     eTestAWSMQTTMsg,
+    eBalance,
     NumOfUserCommand
 };
