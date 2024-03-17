@@ -1,3 +1,5 @@
+bool checkNetwork();
+bool connectWifi();
 void wifi_setup();
 bool checkNetwork();
 void publishMessage();

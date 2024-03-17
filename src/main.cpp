@@ -17,25 +17,28 @@ void setup() {
 
 
 void loop() {
-  static bool tested = false;
-  if(checkNetwork() && !tested){
-    Serial.println();
-    Serial.println();
-    Serial.println("Enter Command: ");
-    while (Serial.available() == 0) {}
-    
-    auto cmd = Serial.readString();
-
-    Serial.println(cmd);
-    stringstream ss(cmd.c_str());
-    vector<string> v;
-    string s;
-    while (getline(ss, s, ' ')) {
- 
-        // store token string in the vector
-        v.push_back(s);
-    }
- 
-    cmdInterpreter(v);
+  if(!checkNetwork()){
+    Serial.println("Wifi Connection Lost!");
+    Serial.println("Reconnecting...!");
+    connectWifi();
   }
+
+  Serial.println();
+  Serial.println();
+  Serial.println("Enter Command: ");
+  while (Serial.available() == 0) {}
+  
+  auto cmd = Serial.readString();
+
+  Serial.println(cmd);
+  stringstream ss(cmd.c_str());
+  vector<string> v;
+  string s;
+  while (getline(ss, s, ' ')) {
+
+      // store token string in the vector
+      v.push_back(s);
+  }
+
+  cmdInterpreter(v);
 }

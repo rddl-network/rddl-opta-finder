@@ -54,12 +54,9 @@ void CmndHelp(){
 }
 
 
-void portentaDeleteFile(const char * filename);
-
 /* TO DO: IT COULDNT WRITE WIFI CREDENTIAL TO FLASH */
 void CmndSetWifi(vector<string> &cmd){
   wifiCredentials wifiInfo;
-  portentaDeleteFile("Wifi");
 
   Serial.println("Enter Wifi SSID: ");
   while (Serial.available() == 0) {}
@@ -94,7 +91,6 @@ void CmndMnemonic(vector<string> &cmd){
 
 
 void CmndStoreSeed(vector<string> &cmd){
-  portentaDeleteFile("seed");
   if( cmd[1].size() == 128)
   {
     sdkStoreSeed((char*)fromHexString(cmd[1].c_str()));
@@ -141,7 +137,6 @@ void CmndCreateCsr(){
 
 void CmndStoreCert(){
   int index = 0;
-  portentaDeleteFile("cert");
   Serial.println("Enter ur Certificate: ");
   SECRET_CERTIFICATE[index++] = '\n';
   while (true) {
@@ -161,7 +156,6 @@ void CmndStoreCert(){
     if (line.indexOf("END CERTIFICATE") != -1) 
       break;
   }
-  portentaDeleteFile("cert");
   SECRET_CERTIFICATE[index++] = '\n';
   Serial.println("Writing Cert file...");
 
