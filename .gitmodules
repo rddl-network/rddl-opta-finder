@@ -2,3 +2,6 @@
 	path = lib/rddl-sdk
 	url = git@github.com:rddl-network/rddl-sdk.git
 	branch = fasagidag/adding_nanopb
+[submodule "lib/Arduino_USBHostMbed5"]
+	path = lib/Arduino_USBHostMbed5
+	url = git@github.com:arduino-libraries/Arduino_USBHostMbed5.git
