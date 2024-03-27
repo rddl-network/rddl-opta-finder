@@ -29,6 +29,7 @@
 #include <ArduinoECCX08.h>
 #include <utility/ECCX08CSR.h>
 #include <utility/ECCX08DefaultTLSConfig.h>
+#include "arduino_secrets.h"
 #include "rddlSDKAPI.h"
 
 
@@ -111,14 +112,23 @@ String certCreateSetup() {
   Serial.println("Hi there, in order to generate a new CSR for your board, we'll need the following information ...");
   Serial.println();
 
-  String country            = promptAndReadLine("Country Name (2 letter code)", "");
-  String stateOrProvince    = promptAndReadLine("State or Province Name (full name)", "");
-  String locality           = promptAndReadLine("Locality Name (eg, city)", "");
-  String organization       = promptAndReadLine("Organization Name (eg, company)", "");
-  String organizationalUnit = promptAndReadLine("Organizational Unit Name (eg, section)", "");
+  // String country            = promptAndReadLine("Country Name (2 letter code)", "");
+  // String stateOrProvince    = promptAndReadLine("State or Province Name (full name)", "");
+  // String locality           = promptAndReadLine("Locality Name (eg, city)", "");
+  // String organization       = promptAndReadLine("Organization Name (eg, company)", "");
+  // String organizationalUnit = promptAndReadLine("Organizational Unit Name (eg, section)", "");
+  // String common             = promptAndReadLine("Common Name (e.g. server FQDN or YOUR name)", serialNumber.c_str());
+  // String slot               = promptAndReadLine("What slot would you like to use? (0 - 4)", "0");
+  // String generateNewKey     = promptAndReadLine("Would you like to generate a new private key? (Y/n)", "Y");
+
+  String country            = "AU";
+  String stateOrProvince    = "Vienna";
+  String locality           = "Vienna";
+  String organization       = "R&C";
+  String organizationalUnit = "Hardware";
+  String slot               = "0";
+  String generateNewKey     = "Y";
   String common             = promptAndReadLine("Common Name (e.g. server FQDN or YOUR name)", serialNumber.c_str());
-  String slot               = promptAndReadLine("What slot would you like to use? (0 - 4)", "0");
-  String generateNewKey     = promptAndReadLine("Would you like to generate a new private key? (Y/n)", "Y");
 
   Serial.println();
 
@@ -146,7 +156,10 @@ String certCreateSetup() {
   Serial.println("Here's your CSR, enjoy!");
   Serial.println();
   Serial.println(csr);
-  sdkWriteFile("devName", (uint8_t*)common.c_str(), common.length());
+  deviceInfo devInfo;
+  sdkReadFile("devInfo", (uint8_t*)&devInfo.ssid[0], sizeof(deviceInfo));  
+  strcpy(devInfo.devName, common.c_str());
+  sdkWriteFile("devInfo", (uint8_t*)&devInfo.ssid[0], sizeof(deviceInfo));
 
   return csr;
 }

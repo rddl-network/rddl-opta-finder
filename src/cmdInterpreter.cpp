@@ -7,6 +7,7 @@
 #include "cmdInterpreter.h"
 #include "awsMqtt.h"
 #include "rddl.h"
+#include "janitza604.h"
 
 using namespace std;
 
@@ -34,6 +35,8 @@ command_code getUserCommand (std::string const& cmd) {
   if (cmd.find("ReadCert")      != std::string::npos) return eReadCert;
   if (cmd.find("TestAWSMQTTMsg")!= std::string::npos) return eTestAWSMQTTMsg;
   if (cmd.find("Balance")       != std::string::npos) return eBalance;
+  if (cmd.find("Showfiles")     != std::string::npos) return eShowFiles;
+  if (cmd.find("ReadSMDate")    != std::string::npos) return eReadSMDate;
   return NumOfUserCommand;
 }
 
@@ -51,33 +54,35 @@ void CmndHelp(){
   Serial.println("ReadCert");
   Serial.println("TestAWSMQTTMsg");
   Serial.println("Balance");
+  Serial.println("Showfiles");
+  Serial.println("ReadSMDate");
 }
 
 
-/* TO DO: IT COULDNT WRITE WIFI CREDENTIAL TO FLASH */
 void CmndSetWifi(vector<string> &cmd){
-  wifiCredentials wifiInfo;
+  deviceInfo devInfo;
 
   Serial.println("Enter Wifi SSID: ");
   while (Serial.available() == 0) {}
   auto ssid = Serial.readString();
   Serial.println(ssid);
-  strcpy(wifiInfo.ssid, ssid.c_str());
+  strcpy(devInfo.ssid, ssid.c_str());
 
   Serial.println("Enter Wifi PASSWORD: ");
   while (Serial.available() == 0) {}
   auto pass = Serial.readString();
   Serial.println(pass);
-  strcpy(wifiInfo.pass, pass.c_str());
+  strcpy(devInfo.pass, pass.c_str());
 
-  sdkWriteFile("Wifi", (uint8_t*)&wifiInfo.ssid[0], 128);  
+  sdkReadFile ("devInfo", (uint8_t*)&devInfo.ssid[0], sizeof(deviceInfo)); 
+  sdkWriteFile("devInfo", (uint8_t*)&devInfo.ssid[0], sizeof(deviceInfo));  
 
-  memset(&wifiInfo.ssid[0], 0, sizeof(wifiCredentials));
+  memset(&devInfo.ssid[0], 0, sizeof(deviceInfo));
 
-  sdkReadFile("Wifi", (uint8_t*)&wifiInfo.ssid[0], 128);  
+  sdkReadFile("devInfo", (uint8_t*)&devInfo.ssid[0], sizeof(deviceInfo));  
 
-  Serial.println(wifiInfo.ssid);
-  Serial.println(wifiInfo.pass);
+  Serial.println(devInfo.ssid);
+  Serial.println(devInfo.pass);
 }
 
 
@@ -179,17 +184,21 @@ void CmndAWSTest(){
     sdkReadFile( "cert", (uint8_t *)SECRET_CERTIFICATE, sizeof(SECRET_CERTIFICATE));
   }
 
-  aws_mqtt_setup();
-  connectMQTT();
+  if(!awsCheckConnection()){
+    awsMqttSetup();
+    connectMQTT();
+  }
 
-  for(int i=0; i<5; ++i){
-    publishMessage();
-    delay(4000);
+  if(awsCheckConnection()){
+    for(int i=0; i<3; ++i){
+      publishMessage("Hello World");
+      delay(4000);
+    }
   }
 }
 
-std::pair<int, String> sendHttpsGetRequest(const char* domainUrl, const char* urlPath, const std::vector<std::pair<String, String>>& headers);
 
+std::pair<int, String> sendHttpsGetRequest(const char* domainUrl, const char* urlPath, const std::vector<std::pair<String, String>>& headers);
 void CmndBalance(){
   String uri{};
   uri += "/cosmos/bank/v1beta1/balances/";
@@ -203,6 +212,30 @@ void CmndBalance(){
   Serial.print(response.second.c_str());
 }
 
+
+extern void printAllFSArduino();
+void CmndShowFiles(){
+  printAllFSArduino();
+}
+
+
+void CmndReadSMDate()
+{
+  Janitza604 j;
+  j.init(192, 168, 10, 29);
+  std::vector<int> date = j.getDateTCP(25);
+  Serial.print(date[0]);
+  Serial.print("/");
+  Serial.print(date[1]);
+  Serial.print("/");
+  Serial.println(date[2]);
+
+  Serial.print(date[3]);
+  Serial.print(":");
+  Serial.print(date[4]);
+  Serial.print(":");
+  Serial.println(date[5]);
+}
 
 void cmdInterpreter(std::vector<std::string> &cmd){
   switch(getUserCommand(cmd[0])){
@@ -252,6 +285,14 @@ void cmdInterpreter(std::vector<std::string> &cmd){
 
     case eBalance:
       CmndBalance();
+      break;
+
+    case eShowFiles:
+      CmndShowFiles();
+      break;
+
+    case eReadSMDate:
+      CmndReadSMDate();
       break;
 
     default:

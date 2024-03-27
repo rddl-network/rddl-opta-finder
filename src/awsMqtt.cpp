@@ -5,6 +5,7 @@
 #include <NTPClient.h>
 #include <mbed_mktime.h>
 #include "arduino_secrets.h"
+#include "rddlSDKAPI.h"
 
 
 // Enter your sensitive data in arduino_secrets.h
@@ -106,10 +107,13 @@ bool checkNetwork(){
 bool connectWifi(){
     int status  = WL_IDLE_STATUS;
     int cnt{0};
+    deviceInfo devInfo;
+
+    sdkReadFile("devInfo", (uint8_t*)&devInfo.ssid[0], sizeof(deviceInfo));  
     while (status != WL_CONNECTED && cnt < 5) {
         Serial.print("- Attempting to connect to WPA SSID: ");
-        Serial.println(SECRET_SSID);
-        status = WiFi.begin(SECRET_SSID, SECRET_PASS);
+        Serial.println(devInfo.ssid);
+        status = WiFi.begin(devInfo.ssid, devInfo.pass);
         delay(500);
         cnt++;
     }
@@ -144,7 +148,7 @@ void wifi_setup(){
 }
 
 
-void aws_mqtt_setup()
+void awsMqttSetup()
 {
     // Check for HSM
     if (!ECCX08.begin()) {
@@ -155,10 +159,17 @@ void aws_mqtt_setup()
 
     // Configure TLS to use HSM and the key/certificate pair
     ArduinoBearSSL.onGetTime(getTime);
-    sslClient.setEccSlot(0, certificate);
+    sslClient.setEccSlot(0, SECRET_CERTIFICATE);
 
-    mqttClient.setId("Portenta03");
+    deviceInfo devInfo;
+    sdkReadFile("devInfo", (uint8_t*)&devInfo.ssid[0], sizeof(deviceInfo)); 
+    mqttClient.setId(devInfo.devName);
     mqttClient.onMessage(onMessageReceived);
+}
+
+
+bool awsCheckConnection(){
+    return mqttClient.connected();
 }
 
 
@@ -198,14 +209,12 @@ void connectMQTT()
 }
 
 
-void publishMessage()
+void publishMessage(String msg)
 {
     Serial.println("Publishing message");
 
     JSONVar payload;
-    String msg = "Hello, World! ";
-    msg += millis();
-    payload["message"] = msg;
+    payload["data"] = msg;
     payload["rssi"] = WiFi.RSSI();
 
     JSONVar message;

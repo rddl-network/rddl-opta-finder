@@ -13,5 +13,7 @@ enum command_code {
     eReadCert,
     eTestAWSMQTTMsg,
     eBalance,
+    eShowFiles,
+    eReadSMDate,
     NumOfUserCommand
 };

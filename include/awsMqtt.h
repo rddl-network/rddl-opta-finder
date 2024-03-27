@@ -2,8 +2,12 @@ bool checkNetwork();
 bool connectWifi();
 void wifi_setup();
 bool checkNetwork();
-void publishMessage();
+void publishMessage(String msg);
 void connectMQTT();
-void aws_mqtt_setup();
+void awsMqttSetup();
 void aws_mqtt_loop();
+bool awsCheckConnection();
 String certCreateSetup();
+
+String webPageLoop();
+void webPageSetup();

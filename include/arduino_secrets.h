@@ -31,7 +31,8 @@ K3w=
 )";
 
 
-struct wifiCredentials{
-    char ssid[128];
-    char pass[128];
+struct deviceInfo{
+    char ssid[64];
+    char pass[64];
+    char devName[64];
 };

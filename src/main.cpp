@@ -6,6 +6,9 @@
 #include "arduino_secrets.h"
 #include "cmdInterpreter.h"
 #include "awsMqtt.h"
+#include "mbed.h"
+
+static rtos::Thread MIDsThread;
 
 using namespace std;
 
@@ -29,16 +32,19 @@ void loop() {
   while (Serial.available() == 0) {}
   
   auto cmd = Serial.readString();
+  // String cmd = webPageLoop();
 
-  Serial.println(cmd);
-  stringstream ss(cmd.c_str());
-  vector<string> v;
-  string s;
-  while (getline(ss, s, ' ')) {
+  if(!cmd.isEmpty()){
+    Serial.println(cmd);
+    stringstream ss(cmd.c_str());
+    vector<string> v;
+    string s;
+    while (getline(ss, s, ' ')) {
 
-      // store token string in the vector
-      v.push_back(s);
+        // store token string in the vector
+        v.push_back(s);
+    }
+
+    cmdInterpreter(v);
   }
-
-  cmdInterpreter(v);
 }
