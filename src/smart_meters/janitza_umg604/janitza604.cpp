@@ -5,16 +5,8 @@ bool Janitza604::init(uint32_t baudrate, uint32_t serialParameters)
     uint32_t preDelay, postDelay, timeout;
     float bitDuration = 1.f / baudrate;
 
-    if (baudrate <= 19200)
-    {
-        preDelay = postDelay = bitDuration * 9.6f * 3.5f * 1e6;
-        timeout = 200;
-    }
-    else
-    {
-        preDelay = postDelay = 1750;
-        timeout = 1000;
-    }
+    preDelay = postDelay = bitDuration * 9.6f * 3.5f * 1e6;
+    timeout = 200;
 
     RS485.setDelays(preDelay, postDelay);
     ModbusRTUClient.setTimeout(timeout);
@@ -27,11 +19,11 @@ bool Janitza604::init(uint8_t first_octet, uint8_t second_octet, uint8_t third_o
     wifiClient      = std::make_unique<WiFiClient>();
     modbusTCPClient = std::make_unique<ModbusTCPClient>(*wifiClient);
     server          = std::make_unique<IPAddress>(first_octet, second_octet, third_octet, fourth_octet);
-    return checkConnection();
+    return checkSMConnection();
 }
 
 
-bool Janitza604::checkConnection()
+bool Janitza604::checkSMConnection()
 {
     if (!modbusTCPClient->connected()) {
         // client not connected, start the Modbus TCP client
@@ -51,7 +43,7 @@ bool Janitza604::checkConnection()
 std::vector<int> Janitza604::getDateTCP(uint8_t address)
 {
     std::vector<int> date;
-    if(checkConnection()){
+    if(checkSMConnection()){
         date.push_back(modbusTCPClient->holdingRegisterRead(address, JANITZA604_REG_DATE_DAY));
         date.push_back(modbusTCPClient->holdingRegisterRead(address, JANITZA604_REG_DATE_MONTH));
         date.push_back(modbusTCPClient->holdingRegisterRead(address, JANITZA604_REG_DATE_YEAR));
@@ -68,7 +60,7 @@ uint32_t Janitza604::modbus7MRead16(uint8_t addr, uint16_t reg)
     uint32_t attempts = 3;
     while (attempts > 0)
     {
-        ModbusRTUClient.requestFrom(addr, INPUT_REGISTERS, reg, 1);
+        ModbusRTUClient.requestFrom(addr, HOLDING_REGISTERS, reg, 1);
         uint32_t data = ModbusRTUClient.read();
         if (data != INVALID_DATA)
         {
@@ -77,7 +69,7 @@ uint32_t Janitza604::modbus7MRead16(uint8_t addr, uint16_t reg)
         else
         {
             attempts -= 1;
-            delay(10);
+            delay(100);
         }
     }
     return INVALID_DATA;
@@ -88,7 +80,7 @@ uint32_t Janitza604::modbus7MRead32(uint8_t addr, uint16_t reg)
     uint8_t attempts = 3;
     while (attempts > 0)
     {
-        ModbusRTUClient.requestFrom(addr, INPUT_REGISTERS, reg, 2);
+        ModbusRTUClient.requestFrom(addr, HOLDING_REGISTERS, reg, 2);
         uint32_t data1 = ModbusRTUClient.read();
         uint32_t data2 = ModbusRTUClient.read();
         if (data1 != INVALID_DATA && data2 != INVALID_DATA)
@@ -98,7 +90,7 @@ uint32_t Janitza604::modbus7MRead32(uint8_t addr, uint16_t reg)
         else
         {
             attempts -= 1;
-            delay(10);
+            delay(100);
         }
     }
     return INVALID_DATA;
@@ -116,7 +108,7 @@ bool Janitza604::modbus7MWrite16(uint8_t address, uint16_t reg, uint16_t toWrite
         else
         {
             attempts -= 1;
-            delay(10);
+            delay(100);
         }
     }
     return false;

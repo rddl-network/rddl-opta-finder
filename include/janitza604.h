@@ -45,7 +45,7 @@ public:
      *
      * @return true in case of success, false otherwise.
      */
-    bool checkConnection();
+    bool checkSMConnection();
     /**
      * Read date parameters 
      *
@@ -54,9 +54,35 @@ public:
      * @return vector of date parameters.
      */
     std::vector<int> getDateTCP(uint8_t address);
-
+    /**
+     * Read a 16-bits register.
+     *
+     * @param addr Modbus id of the target device.
+     * @param reg Start address of the register.
+     *
+     * @return The read value or INVALID_DATA.
+     */
     uint32_t modbus7MRead16(uint8_t addr, uint16_t reg);
+    /**
+     * Read two consecutive 16-bits registers and compose them
+     * into a single 32-bits value, by shifting the first value
+     * left by 16 bits.
+     *
+     * @param addr Modbus id of the target device.
+     * @param reg Start address of the register.
+     *
+     * @return The composed value or INVALID_DATA.
+     */
     uint32_t modbus7MRead32(uint8_t addr, uint16_t reg);
+    /**
+     * Write 8-bits or 16-bits values to a given register.
+     *
+     * @param address Modbus id of the target device.
+     * @param reg Start address of the destination register.
+     * @param toWrite Content that will be written to the destination register.
+     *
+     * @return true in case of success, false otherwise.
+     */
     bool modbus7MWrite16(uint8_t address, uint16_t reg, uint16_t toWrite);
 
 

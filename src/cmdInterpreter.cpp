@@ -219,23 +219,34 @@ void CmndShowFiles(){
 }
 
 
-void CmndReadSMDate()
+void CmndReadSMDate(std::vector<std::string> &cmd)
 {
   Janitza604 j;
-  j.init(192, 168, 10, 29);
-  std::vector<int> date = j.getDateTCP(25);
-  Serial.print(date[0]);
-  Serial.print("/");
-  Serial.print(date[1]);
-  Serial.print("/");
-  Serial.println(date[2]);
+  if(cmd.size() != 1){
+    if(j.init(9600)){
+      uint32_t data = j.modbus7MRead16(25, 6);
+      Serial.print("Modbus Data: "); Serial.println(data);
+    }else{
+      Serial.println("ERROR! Modbus Initialization");
+    }
+  }else{
+    if(j.init(192, 168, 10, 29)){
+      std::vector<int> date = j.getDateTCP(25);
+      Serial.print(date[0]);
+      Serial.print("/");
+      Serial.print(date[1]);
+      Serial.print("/");
+      Serial.println(date[2]);
 
-  Serial.print(date[3]);
-  Serial.print(":");
-  Serial.print(date[4]);
-  Serial.print(":");
-  Serial.println(date[5]);
+      Serial.print(date[3]);
+      Serial.print(":");
+      Serial.print(date[4]);
+      Serial.print(":");
+      Serial.println(date[5]);
+    }
+  }
 }
+
 
 void cmdInterpreter(std::vector<std::string> &cmd){
   switch(getUserCommand(cmd[0])){
@@ -292,7 +303,7 @@ void cmdInterpreter(std::vector<std::string> &cmd){
       break;
 
     case eReadSMDate:
-      CmndReadSMDate();
+      CmndReadSMDate(cmd);
       break;
 
     default:
