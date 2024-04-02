@@ -224,8 +224,26 @@ void CmndReadSMDate(std::vector<std::string> &cmd)
   Janitza604 j;
   if(cmd.size() != 1){
     if(j.init(9600)){
-      uint32_t data = j.modbus7MRead16(25, 6);
-      Serial.print("Modbus Data: "); Serial.println(data);
+      uint32_t data = j.modbusRead16(25, 6);
+      Serial.print(data); Serial.print("/");
+      data = j.modbusRead16(25, 7);
+      Serial.print(data); Serial.print("/");
+      data = j.modbusRead16(25, 8);
+      Serial.println(data); 
+
+      data = j.modbusRead16(25, 9);
+      Serial.print(data); Serial.print(":");
+      data = j.modbusRead16(25, 10);
+      Serial.print(data); Serial.print(":");
+      data = j.modbusRead16(25, 11);
+      Serial.println(data); 
+
+      float f = j.getVoltage(25);
+      Serial.println(f);
+      String msg = String(f);
+      if(awsCheckConnection()){
+            publishMessage(msg);
+      }
     }else{
       Serial.println("ERROR! Modbus Initialization");
     }

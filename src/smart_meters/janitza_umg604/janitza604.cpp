@@ -55,7 +55,24 @@ std::vector<int> Janitza604::getDateTCP(uint8_t address)
     return date;
 }
 
-uint32_t Janitza604::modbus7MRead16(uint8_t addr, uint16_t reg)
+
+float Janitza604::getVoltage(uint8_t address, uint32_t line){
+    uint32_t reg;
+
+    switch (line){
+        case 1: reg = JANITZA604_REG_VOLT_L1; break;
+        case 2: reg = JANITZA604_REG_VOLT_L2; break;
+        case 3: reg = JANITZA604_REG_VOLT_L3; break;
+        default: reg = JANITZA604_REG_VOLT_L1; break;
+    }
+
+    uint32_t data = modbusRead32(address, reg);
+    float volt = *((float*)&data);
+    return volt;
+}
+
+
+uint32_t Janitza604::modbusRead16(uint8_t addr, uint16_t reg)
 {
     uint32_t attempts = 3;
     while (attempts > 0)
@@ -75,7 +92,7 @@ uint32_t Janitza604::modbus7MRead16(uint8_t addr, uint16_t reg)
     return INVALID_DATA;
 };
 
-uint32_t Janitza604::modbus7MRead32(uint8_t addr, uint16_t reg)
+uint32_t Janitza604::modbusRead32(uint8_t addr, uint16_t reg)
 {
     uint8_t attempts = 3;
     while (attempts > 0)
@@ -96,7 +113,7 @@ uint32_t Janitza604::modbus7MRead32(uint8_t addr, uint16_t reg)
     return INVALID_DATA;
 };
 
-bool Janitza604::modbus7MWrite16(uint8_t address, uint16_t reg, uint16_t toWrite)
+bool Janitza604::modbusWrite16(uint8_t address, uint16_t reg, uint16_t toWrite)
 {
     uint8_t attempts = 3;
     while (attempts > 0)
