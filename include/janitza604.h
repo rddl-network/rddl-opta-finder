@@ -24,7 +24,8 @@ constexpr int JANITZA604_REG_VOLT_L3 = 19004;           // VOLT on L3
 
 class Janitza604{
 public:
-    Janitza604(){}
+    Janitza604() = default;
+
     /**
      * Set preDelay and postDelay and start the Modbus RTU client
      * with the parameters for the Janitza UMG 604.
@@ -35,6 +36,7 @@ public:
      * @return true in case of success, false otherwise.
      */
     bool init(uint32_t baudrate = 38400, uint32_t serialParameters = SERIAL_8N2);
+    
     /**
      * Set IP address of server and Start Modbus TCP Connection
      *
@@ -46,12 +48,14 @@ public:
      * @return true in case of success, false otherwise.
      */
     bool init(uint8_t first_octet, uint8_t second_octet, uint8_t third_octet, uint8_t fourth_octet);
+    
     /**
      * Start Modbus TCP Connection to Slave
      *
      * @return true in case of success, false otherwise.
      */
     bool checkSMConnection();
+    
     /**
      * Read date parameters 
      *
@@ -60,6 +64,7 @@ public:
      * @return vector of date parameters.
      */
     std::vector<int> getDateTCP(uint8_t address);
+    
     /**
      * Read voltage parameters 
      *
@@ -68,6 +73,7 @@ public:
      * @return voltage
      */
     float getVoltage(uint8_t address, uint32_t line = 1);
+    
     /**
      * Read a 16-bits register.
      *
@@ -77,6 +83,7 @@ public:
      * @return The read value or INVALID_DATA.
      */
     uint32_t modbusRead16(uint8_t addr, uint16_t reg);
+
     /**
      * Read two consecutive 16-bits registers and compose them
      * into a single 32-bits value, by shifting the first value
@@ -88,6 +95,7 @@ public:
      * @return The composed value or INVALID_DATA.
      */
     uint32_t modbusRead32(uint8_t addr, uint16_t reg);
+    
     /**
      * Write 8-bits or 16-bits values to a given register.
      *
@@ -98,6 +106,15 @@ public:
      * @return true in case of success, false otherwise.
      */
     bool modbusWrite16(uint8_t address, uint16_t reg, uint16_t toWrite);
+
+    /**
+     * Convert unsigned data to float 
+     *
+     * @param val unsigned value 
+     * 
+     * @return converted value
+     */
+    float convert32Float(uint32_t val);
 
 
 private:

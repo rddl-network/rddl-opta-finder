@@ -66,9 +66,7 @@ float Janitza604::getVoltage(uint8_t address, uint32_t line){
         default: reg = JANITZA604_REG_VOLT_L1; break;
     }
 
-    uint32_t data = modbusRead32(address, reg);
-    float volt = *((float*)&data);
-    return volt;
+    return convert32Float(modbusRead32(address, reg));
 }
 
 
@@ -92,6 +90,7 @@ uint32_t Janitza604::modbusRead16(uint8_t addr, uint16_t reg)
     return INVALID_DATA;
 };
 
+
 uint32_t Janitza604::modbusRead32(uint8_t addr, uint16_t reg)
 {
     uint8_t attempts = 3;
@@ -113,6 +112,7 @@ uint32_t Janitza604::modbusRead32(uint8_t addr, uint16_t reg)
     return INVALID_DATA;
 };
 
+
 bool Janitza604::modbusWrite16(uint8_t address, uint16_t reg, uint16_t toWrite)
 {
     uint8_t attempts = 3;
@@ -130,3 +130,9 @@ bool Janitza604::modbusWrite16(uint8_t address, uint16_t reg, uint16_t toWrite)
     }
     return false;
 };
+
+
+float Janitza604::convert32Float(uint32_t val){
+    float data = *((float*)&val);
+    return data;
+}

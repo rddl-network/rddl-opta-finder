@@ -238,7 +238,7 @@ void CmndReadSMDate(std::vector<std::string> &cmd)
       data = j.modbusRead16(25, 11);
       Serial.println(data); 
 
-      float f = j.getVoltage(25);
+      float f = j.getVoltage(25, 1);
       Serial.println(f);
       String msg = String(f);
       if(awsCheckConnection()){
