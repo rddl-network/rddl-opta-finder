@@ -8,6 +8,7 @@
 #include "awsMqtt.h"
 #include "rddl.h"
 #include "janitza604.h"
+#include "atecc608_handler.h"
 
 using namespace std;
 
@@ -37,6 +38,8 @@ command_code getUserCommand (std::string const& cmd) {
   if (cmd.find("Balance")       != std::string::npos) return eBalance;
   if (cmd.find("Showfiles")     != std::string::npos) return eShowFiles;
   if (cmd.find("ReadSMDate")    != std::string::npos) return eReadSMDate;
+  if (cmd.find("TestATECC")     != std::string::npos) return eTestATECC;
+  if (cmd.find("WriteCfgATECC") != std::string::npos) return eWriteConfigATECC;
   return NumOfUserCommand;
 }
 
@@ -56,6 +59,8 @@ void CmndHelp(){
   Serial.println("Balance");
   Serial.println("Showfiles");
   Serial.println("ReadSMDate");
+  Serial.println("TestATECC");
+  Serial.println("WriteCfgATECC");
 }
 
 
@@ -266,6 +271,118 @@ void CmndReadSMDate(std::vector<std::string> &cmd)
 }
 
 
+void printHexBuffer(std::vector<uint8_t> input) {
+  for (int i = 0; i < input.size(); i++) {
+    Serial.print(input[i] >> 4, HEX);
+    Serial.print(input[i] & 0x0f, HEX);
+  }
+  Serial.println();
+}
+
+
+void CmndTestATECC(std::vector<std::string> &cmd)
+{
+  auto status = atecc_handler_init(0x60);
+  if(status){
+    Serial.print("atecc_handler_init Fail!");
+    Serial.println(status);
+    return;
+  }
+
+  int slotID = 1;
+  std::vector<uint8_t> pub_key(64);
+  status = atecc_handler_genkey(slotID, pub_key);
+  if(status){
+    Serial.print("atecc_handler_genkey Fail!");
+    Serial.println(status);
+    return;
+  }
+  Serial.println("Pub key generated: ");
+  printHexBuffer(pub_key);
+  
+  std::vector<uint8_t> priv_key = {
+    0x00, 0x00, 0x00, 0x00,
+    0x39, 0xac, 0x9b, 0xf9, 0x17, 0x1d, 0xe8, 0x6f, 0xfa, 0x77, 0xe0, 0xb9, 0x05, 0x0b, 0xf6, 0xe0,
+    0x6a, 0x2c, 0x1b, 0xc1, 0x76, 0x79, 0x36, 0xe6, 0xc7, 0x45, 0x79, 0xe4, 0x26, 0xa4, 0x47, 0x5f
+  };
+
+  status = atecc_handler_inject_priv_key(slotID, priv_key);
+  if(status){
+    Serial.print("atecc_handler_inject_priv_key Fail!");
+    Serial.println(status);
+    return;
+  }
+
+  
+  status = atecc_handler_get_public_key(slotID, pub_key);
+  if(status){
+    Serial.print("atecc_handler_get_public_key Fail!");
+    Serial.println(status);
+    return;
+  }
+
+  Serial.println("Pub key: ");
+  printHexBuffer(pub_key);
+
+  std::vector<uint8_t> signature(64);
+  std::vector<uint8_t> msg = {
+    0xc8, 0x90, 0xf8, 0x65, 0xf3, 0xb0, 0x5f, 0x78, 0x27, 0x03, 0x4a, 0xae, 0x6a, 0xc2, 0x5c, 0xd5,
+    0xcb, 0xca, 0x5d, 0x25, 0xeb, 0x0f, 0x0c, 0x35, 0xdf, 0x5d, 0x33, 0x90, 0x3e, 0x08, 0xfa, 0xbe
+  };
+
+  status = atecc_handler_sign(slotID, msg, signature);
+  if(status){
+    Serial.print("atecc_handler_sign Fail!");
+    Serial.println(status);
+    return;
+  }
+
+  Serial.println("Signature: ");
+  printHexBuffer(signature);
+
+  status = atecc_handler_verify(slotID, msg, signature, pub_key);
+  if(status){
+    Serial.print("atecc_handler_verify Fail!");
+    Serial.println(status);
+    return;
+  }
+
+  // status = atecc_handler_lock_slot(slotID);
+  // if(status){
+  //   Serial.print("atecc_handler_lock_slot Fail!");
+  //   Serial.println(status);
+  //   return;
+  // }
+
+  Serial.println("TEST ENDED SUCCESSFULLY!");
+}
+
+
+void CmndWriteConfigATECC(std::vector<std::string> &cmd)
+{
+  auto status = atecc_handler_init(0x60);
+  if(status){
+    Serial.print("atecc_handler_init Fail!");
+    Serial.println(status);
+    return;
+  }
+
+  status = atecc_handler_write_configuration(ECCX08_DEFAULT_CONFIGURATION_VALS, sizeof(ECCX08_DEFAULT_CONFIGURATION_VALS));
+  if(status){
+    Serial.print("atecc_handler_write_configuration Fail!");
+    Serial.println(status);
+    return;
+  }
+
+  status = atecc_handler_lock_zone(0);
+  if(status){
+    Serial.print("atecc_handler_lock_zone Fail!");
+    Serial.println(status);
+    return;
+  }
+}
+
+
 void cmdInterpreter(std::vector<std::string> &cmd){
   switch(getUserCommand(cmd[0])){
     case eHelp:
@@ -322,6 +439,14 @@ void cmdInterpreter(std::vector<std::string> &cmd){
 
     case eReadSMDate:
       CmndReadSMDate(cmd);
+      break;
+
+    case eTestATECC:
+      CmndTestATECC(cmd);
+      break;
+
+    case eWriteConfigATECC:
+      CmndWriteConfigATECC(cmd);
       break;
 
     default:

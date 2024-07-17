@@ -15,5 +15,7 @@ enum command_code {
     eBalance,
     eShowFiles,
     eReadSMDate,
+    eTestATECC,
+    eWriteConfigATECC,
     NumOfUserCommand
 };
